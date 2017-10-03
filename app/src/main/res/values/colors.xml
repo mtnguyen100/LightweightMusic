@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="colorPrimary">#404040</color>
+    <color name="colorPrimaryDark">#0e0e0e</color>
+    <color name="colorAccent">#7c7c7c</color>
+    <color name="colorBackground">#303030</color>
+    <color name="music_controller_foreground_dark">#bebebe</color>
+    <color name="text_color_all">#efefef</color>
+</resources>

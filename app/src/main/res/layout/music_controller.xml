@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:padding="8dp"
+    android:orientation="horizontal">
+
+    <LinearLayout
+        android:id="@+id/music_controller_info_linearlayout"
+        android:layout_width="0dp"
+        android:layout_height="match_parent"
+        android:orientation="vertical"
+        android:layout_weight="30"
+        android:gravity="center_vertical">
+        <TextView
+            android:id="@+id/music_controller_title_textview"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textAppearance="@style/MusicControllerTextAppearanceTitle"
+            android:text="@string/music_controller_title_placeholder_string"/>
+        <TextView
+            android:id="@+id/music_controller_artist_textview"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textAppearance="@style/MusicControllerTextAppearanceArtist" />
+    </LinearLayout>
+    <ImageButton
+        android:id="@+id/music_controller_prev_imagebutton"
+        android:layout_width="wrap_content"
+        android:layout_height="match_parent"
+        android:layout_weight="1"
+        android:onClick="playPrev"
+        style="@android:style/MediaButton.Previous"/>
+    <ImageButton
+        android:id="@+id/music_controller_play_imagebutton"
+        android:layout_width="wrap_content"
+        android:layout_height="match_parent"
+        android:layout_weight="2"
+        android:onClick="pause"
+        style="@android:style/MediaButton.Play" />
+    <ImageButton
+        android:id="@+id/music_controller_next_imagebutton"
+        android:layout_width="wrap_content"
+        android:layout_height="match_parent"
+        android:layout_weight="1"
+        android:onClick="playNext"
+        style="@android:style/MediaButton.Next"/>
+</LinearLayout>

@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+    <item
+        android:id="@+id/action_end"
+        android:icon="@drawable/end"
+        android:orderInCategory="1"
+        app:showAsAction="ifRoom"
+        android:title="@string/action_exit_string"/>
+    <item
+        android:id="@+id/action_search"
+        android:icon="@android:drawable/ic_menu_search"
+        android:orderInCategory="2"
+        app:showAsAction="ifRoom"
+        android:title="@string/action_search_string"/>
+    <item
+        android:id="@+id/action_shuffle"
+        android:checkableBehavior="single"
+        android:icon="@drawable/rand"
+        android:orderInCategory="3"
+        app:showAsAction="ifRoom"
+        android:title="@string/action_shuffle_string" />
+    <item
+        android:id="@+id/action_all_songs"
+        android:orderInCategory="100"
+        android:title="@string/action_all_songs_string" />
+    <item
+        android:id="@+id/goto_playlists"
+        android:orderInCategory="200"
+        android:title="@string/action_playlists_string"
+        />
+    <group android:checkableBehavior="single">
+        <item
+            android:id="@+id/action_sort_name"
+            android:orderInCategory="997"
+            app:showAsAction="never"
+            android:title="@string/sort_by_name_string"
+            android:checked="true"/>
+
+        <item
+            android:id="@+id/action_sort_artist"
+            android:orderInCategory="998"
+            app:showAsAction="never"
+            android:title="@string/sort_by_artist_string"/>
+        <item
+            android:id="@+id/action_sort_length"
+            android:orderInCategory="999"
+            app:showAsAction="never"
+            android:title="@string/sort_by_length_string"/>
+    </group>
+</menu>

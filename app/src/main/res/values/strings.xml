@@ -1,0 +1,17 @@
+<resources>
+    <string name="app_name">Music App One</string>
+    <string name="title_activity_playlists">Playlists</string>
+
+    <string name="action_exit_string">Exit</string>
+    <string name="sort_by_artist_string">Sort by artist</string>
+    <string name="sort_by_length_string">Sort by length</string>
+    <string name="sort_by_name_string">Sort by name</string>
+    <string name="hide_player_string">Media Player</string>
+    <string name="action_playlists_string">Playlists</string>
+    <string name="action_all_songs_string">All Songs</string>
+    <string name="action_shuffle_string">Shuffle</string>
+    <string name="music_controller_title_placeholder_string">No song selected</string>
+    <string name="search_hint_string">Search songs or artists</string>
+    <string name="action_search_string">Search</string>
+    <string name="album_cover_imageview_content_description_string">Album cover for current song</string>
+</resources>
