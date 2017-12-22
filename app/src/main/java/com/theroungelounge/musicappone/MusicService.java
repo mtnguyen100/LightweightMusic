@@ -16,7 +16,6 @@ import android.util.Log;
 import android.widget.Toast;
 
 import java.util.ArrayList;
-import java.util.Collections;
 
 /**
  * Created by Rounge on 6/2/2016.
@@ -25,13 +24,14 @@ public class MusicService extends Service implements
         MediaPlayer.OnPreparedListener, MediaPlayer.OnErrorListener,
         MediaPlayer.OnCompletionListener {
 
+    public static String SONG_PLAYING_TAG = "SONG_PLAYING_TAG";
+
     //media player
     private MediaPlayer player;
     //song list
     private ArrayList<Song> songs;
-    private ArrayList<Song> songsShuffled; //Represents the songs played in a shuffled list
     //current position
-    private int songPosn;
+    private int songIndex;
     private final IBinder musicBind = new MusicBinder(); //Represents the MusicBinder binder class
     private String songTitle = ""; //
     private String songArtist = "";
@@ -44,12 +44,11 @@ public class MusicService extends Service implements
         //create the service
         super.onCreate();
         //initialize position
-        songPosn = 0;
+        songIndex = 0;
         //create player
         player = new MediaPlayer();
         //initializes the player
         initMusicPlayer();
-        songsShuffled = new ArrayList<Song>();
         contentUri = MediaStore.Audio.Media.EXTERNAL_CONTENT_URI;
     }
 
@@ -70,22 +69,13 @@ public class MusicService extends Service implements
      */
     public void setList(ArrayList<Song> theSongs) {
         songs = new ArrayList<Song>();
-        songsShuffled = new ArrayList<Song>();
-        for (Song song : theSongs) {
-            songs.add(song);
-            songsShuffled.add(song);
-        }
+        songs.addAll(theSongs);
     }
 
     public void playSong() {
         player.reset();
         //get song
-        Song playSong;
-        if (shuffle) {
-            playSong = songs.get(songPosn);
-        } else {
-            playSong = songsShuffled.get(songPosn);
-        }
+        Song playSong = songs.get(songIndex);
         songTitle = playSong.getTitle();
         songArtist = playSong.getArtist();
         songLength = playSong.getLength();
@@ -103,6 +93,7 @@ public class MusicService extends Service implements
         }
         player.prepareAsync();
         Toast.makeText(this, songInfo, Toast.LENGTH_SHORT).show();
+        sendBroadcast(new Intent(SONG_PLAYING_TAG));
     }
 
     public void setContentUri(Uri uri) {
@@ -110,8 +101,7 @@ public class MusicService extends Service implements
     }
 
     public void setSong(int songIndex) {
-        shuffle = false;
-        songPosn = songIndex;
+        this.songIndex = songIndex;
     }
 
     /**
@@ -119,12 +109,6 @@ public class MusicService extends Service implements
      * Shuffles songs every time the "Shuffle" overflow
      * item is clicked
      */
-    public void setShuffle() {
-        shuffle = true;
-        Collections.shuffle(songs);
-        songPosn = 0;
-        playSong();
-    }
 
     @Override
     public void onDestroy() {
@@ -206,8 +190,8 @@ public class MusicService extends Service implements
     /**
      * @return the current song playing or queued
      */
-    public int getSongPosn() {
-        return songPosn;
+    public int getSongIndex() {
+        return songIndex;
     }
 
     /**
@@ -243,17 +227,17 @@ public class MusicService extends Service implements
      * the method will play the song that is last in the list.
      */
     public void playPrev() {
-        songPosn--;
-        if (songPosn < 0)
-            songPosn = songs.size() - 1;
+        songIndex--;
+        if (songIndex < 0)
+            songIndex = songs.size() - 1;
         playSong();
     }
 
     //skip to next
     public void playNext() {
-        songPosn++;
-        if (songPosn >= songs.size())
-            songPosn = 0;
+        songIndex++;
+        if (songIndex >= songs.size())
+            songIndex = 0;
         playSong();
     }
 }

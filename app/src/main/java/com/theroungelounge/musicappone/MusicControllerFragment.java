@@ -121,6 +121,8 @@ public class MusicControllerFragment extends Fragment {
         artistTextView.setText(currSong.getArtist());
         if(albumCover != null) {
             albumImageView.setImageBitmap(albumCover);
+        } else {
+            albumImageView.setImageBitmap(BitmapFactory.decodeResource(getContext().getResources(),R.drawable.ic_album_placeholder));
         }
     }
 

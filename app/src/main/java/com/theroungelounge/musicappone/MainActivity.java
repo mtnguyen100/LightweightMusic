@@ -1,9 +1,11 @@
 package com.theroungelounge.musicappone;
 
+import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.ContentResolver;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.ServiceConnection;
 import android.database.Cursor;
 import android.net.Uri;
@@ -51,6 +53,7 @@ public class MainActivity extends AppCompatActivity implements MediaPlayerContro
     private TextView songArtistTextView;
 
     private MusicService musicSrv;              //Service used to stream music
+    private MusicUpdateReceiver musicUpdateReceiver; //Receiver to update the controller views
     private Intent playIntent;                  //Binds the MusicService to MainActivity
     private boolean musicBound = false;         //Checks if the MainActivity is still bound to MusicService
 
@@ -79,7 +82,7 @@ public class MainActivity extends AppCompatActivity implements MediaPlayerContro
                 playPauseButton.setImageResource(android.R.drawable.ic_media_pause);
                 searchSongPlayed = true;
             } else {
-                updateControllerTextViews(musicSrv.getSongPosn());
+                updateControllerTextViews(musicSrv.getSongIndex());
                     if(musicSrv.isPng()) {
                     playPauseButton.setImageResource(android.R.drawable.ic_media_pause);
                 } else {
@@ -95,6 +98,15 @@ public class MainActivity extends AppCompatActivity implements MediaPlayerContro
         }
     };
 
+    private class MusicUpdateReceiver extends BroadcastReceiver {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            if(intent.getAction().equals(MusicService.SONG_PLAYING_TAG)) {
+                updateControllerTextViews(musicSrv.getSongIndex());
+            }
+        }
+    }
+
     @SuppressWarnings("unchecked")
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -104,13 +116,12 @@ public class MainActivity extends AppCompatActivity implements MediaPlayerContro
 
         musicUri = MediaStore.Audio.Media.EXTERNAL_CONTENT_URI;
 
-        musicControllerTextLinearLayout = (LinearLayout)
-                findViewById(R.id.music_controller_info_linearlayout);
-        playPauseButton = (ImageButton) findViewById(R.id.music_controller_play_imagebutton);
-        prevButton = (ImageButton) findViewById(R.id.music_controller_prev_imagebutton);
-        nextButton = (ImageButton) findViewById(R.id.music_controller_next_imagebutton);
-        songTitleTextView = (TextView) findViewById(R.id.music_controller_title_textview);
-        songArtistTextView = (TextView) findViewById(R.id.music_controller_artist_textview);
+        musicControllerTextLinearLayout = findViewById(R.id.music_controller_info_linearlayout);
+        playPauseButton = findViewById(R.id.music_controller_play_imagebutton);
+        prevButton = findViewById(R.id.music_controller_prev_imagebutton);
+        nextButton = findViewById(R.id.music_controller_next_imagebutton);
+        songTitleTextView = findViewById(R.id.music_controller_title_textview);
+        songArtistTextView = findViewById(R.id.music_controller_artist_textview);
 
         Intent mainActivityIntent = getIntent();
         if (mainActivityIntent.hasExtra(SearchableActivity.EXTRA_SEARCH_SONG_LIST)) {
@@ -162,6 +173,10 @@ public class MainActivity extends AppCompatActivity implements MediaPlayerContro
         prevButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                if(songsNotSynced) {
+                    musicSrv.setList(songList);
+                    songsNotSynced = false;
+                }
                 playPrev();
                 playPauseButton.setImageResource(android.R.drawable.ic_media_pause);
             }
@@ -169,6 +184,10 @@ public class MainActivity extends AppCompatActivity implements MediaPlayerContro
         nextButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                if(songsNotSynced) {
+                    musicSrv.setList(songList);
+                    songsNotSynced = false;
+                }
                 playNext();
                 playPauseButton.setImageResource(android.R.drawable.ic_media_pause);
             }
@@ -186,7 +205,7 @@ public class MainActivity extends AppCompatActivity implements MediaPlayerContro
                                         .findFragmentByTag(CONTROLLERFRAGMENT_TAG);
                         if(currFragment == null) {
                             musicControllerFragment = MusicControllerFragment.newInstance(
-                                    songList.get(musicSrv.getSongPosn()), musicUri);
+                                    songList.get(musicSrv.getSongIndex()), musicUri);
                             songListFragment = null;
                             getSupportFragmentManager().beginTransaction()
                                     .replace(R.id.main_activity_fragment_container,
@@ -215,7 +234,7 @@ public class MainActivity extends AppCompatActivity implements MediaPlayerContro
         boolean is_list_focused =
                 getSupportFragmentManager().findFragmentByTag(SONGLISTFRAGMENT_TAG) != null;
         outState.putBoolean(LIST_FOCUSED, is_list_focused);
-        outState.putSerializable(CURR_SONG, songList.get(musicSrv.getSongPosn()));
+        outState.putSerializable(CURR_SONG, songList.get(musicSrv.getSongIndex()));
         outState.putSerializable(SONG_LIST, songList);
         super.onSaveInstanceState(outState);
     }
@@ -271,11 +290,9 @@ public class MainActivity extends AppCompatActivity implements MediaPlayerContro
     public boolean onOptionsItemSelected(MenuItem item) {
         //menu item selected
         switch (item.getItemId()) {
+            //TODO: fix the shuffle button so that the controller TextViews get updated
             case R.id.action_shuffle:
-                musicSrv.setShuffle();
-                if (playbackPaused) {
-                    playbackPaused = false;
-                }
+                setShuffle();
                 break;
             case R.id.action_search:
                 onSearchRequested();
@@ -283,7 +300,7 @@ public class MainActivity extends AppCompatActivity implements MediaPlayerContro
             case R.id.action_all_songs:
                 songList = getSongList();
                 sortByName();
-                musicSrv.setContentUri(musicUri);
+                musicSrv.setContentUri(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI);
                 songsNotSynced = true;
                 break;
             case R.id.goto_playlists:Intent gotoPlaylists = new Intent(this, PlaylistsActivity.class);
@@ -331,7 +348,14 @@ public class MainActivity extends AppCompatActivity implements MediaPlayerContro
                 long playlistId = data.getLongExtra("PLAYLIST_ID", 0);
                 songList = (ArrayList<Song>) data.getSerializableExtra(Intent.EXTRA_TEXT);
                 sortByName();
-                musicSrv.setList(songList);
+                if (musicControllerFragment != null) {
+                    songListFragment = SongListFragment.newInstance(songList);
+                    musicControllerFragment = null;
+                    getSupportFragmentManager().beginTransaction()
+                            .replace(R.id.main_activity_fragment_container,
+                                    songListFragment, SONGLISTFRAGMENT_TAG)
+                            .commit();
+                }
                 musicUri = MediaStore.Audio.Playlists.Members.getContentUri("external", playlistId);
                 musicSrv.setContentUri(musicUri);
             }
@@ -468,11 +492,15 @@ public class MainActivity extends AppCompatActivity implements MediaPlayerContro
     protected void onPause() {
         super.onPause();
         paused = true;
+        if (musicUpdateReceiver != null) { unregisterReceiver(musicUpdateReceiver); }
     }
 
     @Override
     protected void onResume() {
         super.onResume();
+        if(musicUpdateReceiver == null) { musicUpdateReceiver = new MusicUpdateReceiver(); }
+        IntentFilter intentFilter = new IntentFilter(MusicService.SONG_PLAYING_TAG);
+        registerReceiver(musicUpdateReceiver, intentFilter);
     }
 
     @Override
@@ -511,6 +539,19 @@ public class MainActivity extends AppCompatActivity implements MediaPlayerContro
         t.start();
     }
 
+    private void setShuffle() {
+        Collections.shuffle(songList);
+        songsNotSynced = true;
+        if (songListFragment != null) {
+            songListFragment = SongListFragment.newInstance(songList);
+            getSupportFragmentManager().beginTransaction()
+                    .replace(R.id.main_activity_fragment_container,
+                            songListFragment, SONGLISTFRAGMENT_TAG)
+                    .commit();
+        }
+        onSongPicked(0);
+    }
+
     private void updateControllerTextViews(int songIndex) {
         songTitleTextView.setText(songList.get(songIndex).getTitle());
         songArtistTextView.setText(songList.get(songIndex).getArtist());
@@ -522,7 +563,7 @@ public class MainActivity extends AppCompatActivity implements MediaPlayerContro
     //play next
     public void playNext() {
         musicSrv.playNext();
-        updateControllerTextViews(musicSrv.getSongPosn());
+        updateControllerTextViews(musicSrv.getSongIndex());
         if (playbackPaused) {
             playbackPaused = false;
         }
@@ -531,7 +572,7 @@ public class MainActivity extends AppCompatActivity implements MediaPlayerContro
     //play previous
     public void playPrev() {
         musicSrv.playPrev();
-        updateControllerTextViews(musicSrv.getSongPosn());
+        updateControllerTextViews(musicSrv.getSongIndex());
         if (playbackPaused) {
             playbackPaused = false;
         }
@@ -550,7 +591,15 @@ public class MainActivity extends AppCompatActivity implements MediaPlayerContro
 
     public void play() {
         playbackPaused = false;
-        musicSrv.go();
+        if(songsNotSynced) {
+            musicSrv.setList(songList);
+            musicUri = MediaStore.Audio.Media.EXTERNAL_CONTENT_URI;
+            songsNotSynced = false;
+            musicSrv.setSong(0);
+            musicSrv.playSong();
+        } else {
+            musicSrv.go();
+        }
     }
 
     @Override

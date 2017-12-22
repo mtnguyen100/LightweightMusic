@@ -37,12 +37,11 @@ public class SearchableActivity extends AppCompatActivity
         setContentView(R.layout.activity_searchable);
 
         songCursorAdapter = new SongCursorAdapter(this, null, 0);
-        searchResultsListView = (ListView) findViewById(R.id.search_song_list);
+        searchResultsListView = findViewById(R.id.search_song_list);
 
         Intent intent = getIntent();
         if(Intent.ACTION_SEARCH.equals(intent.getAction())) {
             String query = intent.getStringExtra(SearchManager.QUERY);
-            query = "'%" + query + "%'";
 
             //performSearch(query);
             Bundle bundle = new Bundle();
@@ -129,7 +128,7 @@ public class SearchableActivity extends AppCompatActivity
     public Loader<Cursor> onCreateLoader(int id, Bundle args) {
         Uri musicUri = MediaStore.Audio.Media.EXTERNAL_CONTENT_URI;
         String query = args.getString(SEARCH_QUERY);
-        String sortOrder = MediaStore.Audio.Media.ARTIST + " ASC";
+        String sortOrder = MediaStore.Audio.Media.TITLE + " ASC";
 
         return new CursorLoader(this,
                 musicUri,
@@ -142,9 +141,9 @@ public class SearchableActivity extends AppCompatActivity
                         + " AND " +
                         MediaStore.Audio.Media.TITLE + " NOT LIKE '+%'"
                         + " AND " + "(" +
-                        MediaStore.Audio.Media.TITLE + " LIKE " + query
+                        MediaStore.Audio.Media.TITLE + " LIKE " + "'%" + query + "%'"
                         + " OR " +
-                        MediaStore.Audio.Media.ARTIST + " LIKE " + query + ")",
+                        MediaStore.Audio.Media.ARTIST + " LIKE " + "'" + query + "'" + ")",
                 null,
                 sortOrder);
     }
