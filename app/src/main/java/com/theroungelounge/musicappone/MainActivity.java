@@ -591,7 +591,7 @@ public class MainActivity extends AppCompatActivity implements MediaPlayerContro
 
     public void play() {
         playbackPaused = false;
-        if(songsNotSynced) {
+        if(songsNotSynced && musicSrv.getSongIndex() == 0) {
             musicSrv.setList(songList);
             musicUri = MediaStore.Audio.Media.EXTERNAL_CONTENT_URI;
             songsNotSynced = false;

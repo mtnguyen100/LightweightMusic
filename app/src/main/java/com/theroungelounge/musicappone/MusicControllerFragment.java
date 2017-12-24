@@ -89,14 +89,14 @@ public class MusicControllerFragment extends Fragment {
                              Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_music_controller, container, false);
 
-        albumImageView = (ImageView) view.findViewById(R.id.song_focus_album_cover_imageview);
-        /*prevButton = (ImageButton) view.findViewById(R.id.prev_button);
-        nextButton = (ImageButton) view.findViewById(R.id.next_button);
-        rewindButton = (ImageButton) view.findViewById(R.id.rewind_button);
-        fastForwardButton = (ImageButton) view.findViewById(R.id.ffwd_button);
-        pauseButton = (ImageButton) view.findViewById(R.id.pause_button); */
-        titleTextView = (TextView) view.findViewById(R.id.song_focus_title_textview);
-        artistTextView = (TextView) view.findViewById(R.id.song_focus_artist_textview);
+        albumImageView = view.findViewById(R.id.song_focus_album_cover_imageview);
+        /*prevButton = view.findViewById(R.id.prev_button);
+        nextButton = view.findViewById(R.id.next_button);
+        rewindButton = view.findViewById(R.id.rewind_button);
+        fastForwardButton = view.findViewById(R.id.ffwd_button);
+        pauseButton = view.findViewById(R.id.pause_button); */
+        titleTextView = view.findViewById(R.id.song_focus_title_textview);
+        artistTextView = view.findViewById(R.id.song_focus_artist_textview);
 
         updateControllerViews(currSong);
         /*prevButton.setOnClickListener(new View.OnClickListener() {
