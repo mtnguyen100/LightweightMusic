@@ -13,7 +13,6 @@ import android.os.IBinder;
 import android.os.PowerManager;
 import android.provider.MediaStore;
 import android.util.Log;
-import android.widget.Toast;
 
 import java.util.ArrayList;
 
@@ -92,7 +91,6 @@ public class MusicService extends Service implements
             Log.e("MUSIC SERVICE", "Error setting data source", e);
         }
         player.prepareAsync();
-        Toast.makeText(this, songInfo, Toast.LENGTH_SHORT).show();
         sendBroadcast(new Intent(SONG_PLAYING_TAG));
     }
 
