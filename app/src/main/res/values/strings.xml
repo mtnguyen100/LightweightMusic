@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">Music App One</string>
+    <string name="app_name">Lightweight Music</string>
     <string name="title_activity_playlists">Playlists</string>
 
     <string name="action_exit_string">Exit</string>
