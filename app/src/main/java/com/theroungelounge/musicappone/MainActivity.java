@@ -1,5 +1,6 @@
 package com.theroungelounge.musicappone;
 
+import android.Manifest;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.ContentResolver;
@@ -7,13 +8,17 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.ServiceConnection;
+import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.provider.BaseColumns;
 import android.provider.MediaStore;
+import android.support.annotation.NonNull;
+import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.Fragment;
+import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -50,6 +55,7 @@ public class MainActivity extends AppCompatActivity implements MediaPlayerContro
     private boolean playbackPaused = true;           //Checks if player is currently paused
     private boolean songsNotSynced;                  //Checks if songList is synced with MusicService
     public static boolean searchSongPlayed;          //Checks if a SearchableActivity song is playing
+    private static boolean hasPermission = false;    //Checks if the read permission is given
 
     //View
     private SongListFragment songListFragment;
@@ -299,54 +305,73 @@ public class MainActivity extends AppCompatActivity implements MediaPlayerContro
         }
     }
 
+
+
+
+
+
+
+
+
+
+
     /* View methods */
-    @SuppressWarnings("unchecked")
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        /* Initialize Model */
-        musicUri = MediaStore.Audio.Media.EXTERNAL_CONTENT_URI;
-        Intent mainActivityIntent = getIntent();
-        //Sets the songList to the result list from a search from the SearchableActivity
-        //If there was no search, set the songList to the default list sorted by name
-        if (mainActivityIntent.hasExtra(SearchableActivity.EXTRA_SEARCH_SONG_LIST)) {
-            songList = (ArrayList<Song>) getIntent()
-                    .getSerializableExtra(SearchableActivity.EXTRA_SEARCH_SONG_LIST);
-            songsNotSynced = true;
+        if (ContextCompat.checkSelfPermission(
+                this, Manifest.permission.READ_EXTERNAL_STORAGE)
+                != PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(
+                    this, new String[]{Manifest.permission.READ_EXTERNAL_STORAGE},
+                    0);
         } else {
-            songList = getSongList();
-            sortByName();
-        }
+            hasPermission = true;
 
-        //Retrieves the previous state of the MainActivity via savedInstanceState, if it exists
-        //Otherwise, initialize the default listFragment
-        if(savedInstanceState != null && savedInstanceState.containsKey(LIST_FOCUSED)) {
-            if(savedInstanceState.containsKey(SONG_LIST)) {
-                songList = (ArrayList<Song>) savedInstanceState.getSerializable(SONG_LIST);
+            /* Initialize Model */
+            musicUri = MediaStore.Audio.Media.EXTERNAL_CONTENT_URI;
+            Intent mainActivityIntent = getIntent();
+            //Sets the songList to the result list from a search from the SearchableActivity
+            //If there was no search, set the songList to the default list sorted by name
+            if (mainActivityIntent.hasExtra(SearchableActivity.EXTRA_SEARCH_SONG_LIST)) {
+                songList = (ArrayList<Song>) getIntent()
+                        .getSerializableExtra(SearchableActivity.EXTRA_SEARCH_SONG_LIST);
+                songsNotSynced = true;
+            } else {
+                songList = getSongList();
+                sortByName();
             }
-            if(savedInstanceState.getBoolean(LIST_FOCUSED)) {
+
+            //Retrieves the previous state of the MainActivity via savedInstanceState, if it exists
+            //Otherwise, initialize the default listFragment
+            if(savedInstanceState != null && savedInstanceState.containsKey(LIST_FOCUSED)) {
+                if(savedInstanceState.containsKey(SONG_LIST)) {
+                    songList = (ArrayList<Song>) savedInstanceState.getSerializable(SONG_LIST);
+                }
+                if(savedInstanceState.getBoolean(LIST_FOCUSED)) {
+                    songListFragment = SongListFragment.newInstance(songList);
+                    getSupportFragmentManager().beginTransaction()
+                            .replace(R.id.main_activity_fragment_container,
+                                    songListFragment, SONGLISTFRAGMENT_TAG)
+                            .commit();
+                } else {
+                    musicControllerFragment = MusicControllerFragment.newInstance(
+                            (Song)savedInstanceState.getSerializable(CURR_SONG), musicUri);
+                    getSupportFragmentManager().beginTransaction()
+                            .replace(R.id.main_activity_fragment_container,
+                                    musicControllerFragment,
+                                    CONTROLLERFRAGMENT_TAG)
+                            .commit();
+                }
+            } else {
                 songListFragment = SongListFragment.newInstance(songList);
                 getSupportFragmentManager().beginTransaction()
                         .replace(R.id.main_activity_fragment_container,
                                 songListFragment, SONGLISTFRAGMENT_TAG)
                         .commit();
-            } else {
-                musicControllerFragment = MusicControllerFragment.newInstance(
-                        (Song)savedInstanceState.getSerializable(CURR_SONG), musicUri);
-                getSupportFragmentManager().beginTransaction()
-                        .replace(R.id.main_activity_fragment_container,
-                                musicControllerFragment,
-                                CONTROLLERFRAGMENT_TAG)
-                        .commit();
             }
-        } else {
-            songListFragment = SongListFragment.newInstance(songList);
-            getSupportFragmentManager().beginTransaction()
-                    .replace(R.id.main_activity_fragment_container,
-                            songListFragment, SONGLISTFRAGMENT_TAG)
-                    .commit();
         }
 
         /* Initialize Views */
@@ -427,12 +452,49 @@ public class MainActivity extends AppCompatActivity implements MediaPlayerContro
     }
 
     @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        if(grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+            /* Initialize Model */
+            musicUri = MediaStore.Audio.Media.EXTERNAL_CONTENT_URI;
+            Intent mainActivityIntent = getIntent();
+            //Sets the songList to the result list from a search from the SearchableActivity
+            //If there was no search, set the songList to the default list sorted by name
+            if (mainActivityIntent.hasExtra(SearchableActivity.EXTRA_SEARCH_SONG_LIST)) {
+                songList = (ArrayList<Song>) getIntent()
+                        .getSerializableExtra(SearchableActivity.EXTRA_SEARCH_SONG_LIST);
+                songsNotSynced = true;
+            } else {
+                songList = getSongList();
+                sortByName();
+            }
+
+            //Retrieves the previous state of the MainActivity via savedInstanceState, if it exists
+            //Otherwise, initialize the default listFragment
+            songListFragment = SongListFragment.newInstance(songList);
+            getSupportFragmentManager().beginTransaction()
+                    .replace(R.id.main_activity_fragment_container,
+                            songListFragment, SONGLISTFRAGMENT_TAG)
+                    .commit();
+
+            if (playIntent == null) {
+                playIntent = new Intent(this, MusicService.class);
+                bindService(playIntent, musicConnection, Context.BIND_AUTO_CREATE);
+                startService(playIntent);
+            }
+
+            hasPermission = true;
+        }
+    }
+
+    @Override
     protected void onStart() {
         super.onStart();
-        if (playIntent == null) {
-            playIntent = new Intent(this, MusicService.class);
-            bindService(playIntent, musicConnection, Context.BIND_AUTO_CREATE);
-            startService(playIntent);
+        if(hasPermission) {
+            if (playIntent == null) {
+                playIntent = new Intent(this, MusicService.class);
+                bindService(playIntent, musicConnection, Context.BIND_AUTO_CREATE);
+                startService(playIntent);
+            }
         }
     }
 
@@ -457,15 +519,17 @@ public class MainActivity extends AppCompatActivity implements MediaPlayerContro
 
     @Override
     protected void onSaveInstanceState(Bundle outState) {
-        if(songsNotSynced) {
-            musicSrv.setList(songList);
+        if(hasPermission) {
+            if(songsNotSynced) {
+                musicSrv.setList(songList);
+            }
+            boolean is_list_focused =
+                    getSupportFragmentManager().findFragmentByTag(SONGLISTFRAGMENT_TAG) != null;
+            outState.putBoolean(LIST_FOCUSED, is_list_focused);
+            outState.putSerializable(CURR_SONG, songList.get(musicSrv.getSongIndex()));
+            outState.putSerializable(SONG_LIST, songList);
+            super.onSaveInstanceState(outState);
         }
-        boolean is_list_focused =
-                getSupportFragmentManager().findFragmentByTag(SONGLISTFRAGMENT_TAG) != null;
-        outState.putBoolean(LIST_FOCUSED, is_list_focused);
-        outState.putSerializable(CURR_SONG, songList.get(musicSrv.getSongIndex()));
-        outState.putSerializable(SONG_LIST, songList);
-        super.onSaveInstanceState(outState);
     }
 
     @Override
